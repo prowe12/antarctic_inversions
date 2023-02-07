@@ -52,7 +52,7 @@ import matplotlib.pyplot as plt
 
 
 def getalt():
-    fname = " myfile.nc"
+    fname = "myfile.nc"
     with Dataset(fname, "r") as nc_h:
 
         # alt = Re * h / (Re − h)
@@ -62,7 +62,7 @@ def getalt():
         #
         # GRIB2: format the earth model is a sphere with
         # radius = 6371.2290 km, as defined in the WMO GRIB2 specifications,
-        geop = nc_h["z"][0, :, 0, 0].data / 9.80665 / 1000
+        geop = nc_h["z"][:].data / 9.80665 / 1000
         alt = 6367.47 * geop / (6367.47 - geop)
         alt[geop == 0] = 0
         return alt, geop
@@ -77,17 +77,30 @@ fname = "tq_ml.nc"
 ncid = Dataset(fname, "r")
 # ncid.variables.keys()
 # dict_keys(['longitude', 'latitude', 'level', 'time', 't', 'q'])
+# ncid['t']: nt16 t(time, level, latitude, longitude)
 
 alt, geop = getalt()
 
+firstlat = str(ncid["latitude"][0].data)
+lastlat = str(ncid["latitude"][-1].data)
+
 plt.figure(1)
 plt.clf()
-plt.plot(geop, ".-")  # m
-plt.plot(alt, ".-")  # m
+plt.plot(geop[0, :, 0, 0], ".", label=firstlat + ": geopotential")
+plt.plot(alt[0, :, 0, 0], "-", label=firstlat + " altitude")
+plt.plot(geop[0, :, -1, 0], ".", label=lastlat + ": geopotential")
+plt.plot(alt[0, :, -1, 0], "-", label=lastlat + " altitude")
+plt.legend()
+plt.xlabel("index")
+plt.ylabel("Height (km)")
 
 plt.figure(2)
 plt.clf()
-plt.plot(ncid["t"][0, :, 0, 0].data, alt, ".-")  # m
+plt.plot(ncid["t"][0, :, 0, 0].data, alt[0, :, 0, 0], ".-", label=firstlat)
+plt.plot(ncid["t"][0, :, -1, 0].data, alt[0, :, -1, 0], ".-", label=lastlat)
+plt.xlabel("Temperature (K)")
+plt.ylabel("Height (km)")
+plt.legend()
 
 
 # ncid.variables.keys()
