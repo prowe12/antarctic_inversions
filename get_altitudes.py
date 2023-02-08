@@ -51,8 +51,7 @@ from netCDF4 import Dataset
 import matplotlib.pyplot as plt
 
 
-def getalt():
-    fname = "myfile.nc"
+def getalt(fname):
     with Dataset(fname, "r") as nc_h:
 
         # alt = Re * h / (Re − h)
@@ -73,49 +72,60 @@ def getalt():
 #     with Dataset(fname, "r") as ncid:
 #         ncid['t']
 
-fname = "tq_ml.nc"
-ncid = Dataset(fname, "r")
-# ncid.variables.keys()
-# dict_keys(['longitude', 'latitude', 'level', 'time', 't', 'q'])
-# ncid['t']: nt16 t(time, level, latitude, longitude)
 
-alt, geop = getalt()
+def example():
+    """
+    Print Altitude, geopotential, and temperature for an example case
+    """
+    eradir = "era5/"
+    ncdir = eradir + "2018/"
+    fname = ncdir + "tq_ml_2018_08_01_00.nc"
 
-firstlat = str(ncid["latitude"][0].data)
-lastlat = str(ncid["latitude"][-1].data)
+    # Get the altitude and geopotential
+    alt, geop = getalt(ncdir + "geop_2018_08_01_00.nc")
 
-plt.figure(1)
-plt.clf()
-plt.plot(geop[0, :, 0, 0], ".", label=firstlat + ": geopotential")
-plt.plot(alt[0, :, 0, 0], "-", label=firstlat + " altitude")
-plt.plot(geop[0, :, -1, 0], ".", label=lastlat + ": geopotential")
-plt.plot(alt[0, :, -1, 0], "-", label=lastlat + " altitude")
-plt.legend()
-plt.xlabel("index")
-plt.ylabel("Height (km)")
+    with Dataset(fname, "r") as nci:
+        # ncid.variables.keys()
+        # dict_keys(['longitude', 'latitude', 'level', 'time', 't', 'q'])
+        # ncid['t']: nt16 t(time, level, latitude, longitude)
 
-plt.figure(2)
-plt.clf()
-plt.plot(ncid["t"][0, :, 0, 0].data, alt[0, :, 0, 0], ".-", label=firstlat)
-plt.plot(ncid["t"][0, :, -1, 0].data, alt[0, :, -1, 0], ".-", label=lastlat)
-plt.xlabel("Temperature (K)")
-plt.ylabel("Height (km)")
-plt.legend()
+        # Example lats to plot
+        firstlat = str(nci["latitude"][0].data)
+        lastlat = str(nci["latitude"][-1].data)
 
+        # Plot geopotential and altitude
+        plt.figure(1)
+        plt.clf()
+        plt.plot(geop[0, :, 0, 0], ".", label=firstlat + ": geopotential")
+        plt.plot(alt[0, :, 0, 0], "-", label=firstlat + " altitude")
+        plt.plot(geop[0, :, -1, 0], ".", label=lastlat + ": geopotential")
+        plt.plot(alt[0, :, -1, 0], "-", label=lastlat + " altitude")
+        plt.legend()
+        plt.xlabel("index")
+        plt.ylabel("Height (km)")
 
-# ncid.variables.keys()
-# dict_keys(['longitude', 'latitude', 'level', 'time', 'z'])
+        # Plot temperature with altitude
+        plt.figure(2)
+        plt.clf()
+        plt.plot(nci["t"][0, :, 0, 0].data, alt[0, :, 0, 0], label=firstlat)
+        plt.plot(nci["t"][0, :, -1, 0].data, alt[0, :, -1, 0], label=lastlat)
+        plt.xlabel("Temperature (K)")
+        plt.ylabel("Height (km)")
+        plt.legend()
 
-# ncid["z"]
-# <class 'netCDF4._netCDF4.Variable'>
-# int16 z(time, level, latitude, longitude)
-#     scale_factor: 11.919896078046438
-#     add_offset: 388972.0777106524
-#     _FillValue: -32767
-#     missing_value: -32767
-#     units: m**2 s**-2
-#     long_name: Geopotential
-#     standard_name: geopotential
-# unlimited dimensions:
-# current shape = (1, 137, 31, 360)
-# filling on
+    # ncid.variables.keys()
+    # dict_keys(['longitude', 'latitude', 'level', 'time', 'z'])
+
+    # ncid["z"]
+    # <class 'netCDF4._netCDF4.Variable'>
+    # int16 z(time, level, latitude, longitude)
+    #     scale_factor: 11.919896078046438
+    #     add_offset: 388972.0777106524
+    #     _FillValue: -32767
+    #     missing_value: -32767
+    #     units: m**2 s**-2
+    #     long_name: Geopotential
+    #     standard_name: geopotential
+    # unlimited dimensions:
+    # current shape = (1, 137, 31, 360)
+    # filling on
