@@ -51,7 +51,8 @@ def write_bash(dates, times, gb_dir, nc_dir):
     """Write the bash script"""
     compgeo = "python3 compute_geopotential_on_ml.py "
     grib2nc = "grib_to_netcdf -o "  # "myfile.nc myfile.grib"
-    with open("get_geopotentialfiles.sh", "w", encoding="utf-8") as fid:
+    fname = "get_geopotentialfiles_" + dates[0][:4] + ".sh"
+    with open(fname, "w", encoding="utf-8") as fid:
         for date in dates:
             for mytime in times:
                 # filenames
@@ -212,12 +213,10 @@ def runner(year, topdir):
     ]
 
     download(dates, times, gribdir)
-    # write_bash(dates, times, gribdir, ncdir)
+    write_bash(dates, times, gribdir, ncdir)
 
 
 ERADIR = "era5/"
-runner(2021, ERADIR)
-runner(2022, ERADIR)
 runner(2010, ERADIR)
 runner(2011, ERADIR)
 runner(2012, ERADIR)
@@ -226,6 +225,11 @@ runner(2014, ERADIR)
 runner(2015, ERADIR)
 runner(2016, ERADIR)
 runner(2017, ERADIR)
+runner(2018, ERADIR)
+runner(2019, ERADIR)
+runner(2020, ERADIR)
+runner(2021, ERADIR)
+runner(2022, ERADIR)
 
 # Run in terminal via:
 # bash get_geopotentialfiles.sh
