@@ -46,8 +46,7 @@ import os
 
 from get_altitudes import getalt
 from create_inversion_file import create_inversion_file
-
-# from plot_results import plot_results
+from plot_results import plot_results
 
 
 def plot_prof(figno, height, temp, label=""):
@@ -71,43 +70,10 @@ def inversion_exists(temp):
     # temperatures *or* the second two temperatures
     # the latter condition is added because the interpolation
     # to the surface temperature appears to be imperfect
-    if temp[1] - temp[0] >= 0 or temp[2] - temp[1] >= 0:
+    if temp[1] - temp[0] >= 0:
         return True
     else:
         return False
-
-
-def get_params(year):
-    # Pressure levels
-    press_levs = np.hstack(
-        [
-            np.arange(1000, 925 - 5, -25),
-            np.arange(900, 450, -50),
-        ]
-    )
-    press_levs_ints = list(press_levs)
-    press_levs = [str(p) for p in press_levs_ints]
-
-    north = -88.0
-    south = -90.0
-    west = 121.0  # -59.0
-    east = 122.0  # -58.5
-    return {
-        "format": "netcdf",
-        "product_type": "reanalysis",
-        "variable": [
-            "pressure",
-            "Geopotential",
-            "Temperature",
-        ],
-        "pressure_level": press_levs,
-        "year": [year],
-        "month": ["07"],
-        "day": ["01", "02", "03"],
-        "time": ["00:00", "12:00"],
-        "grid": [0.5, 0.5],
-        "area": [north, west, south, east],
-    }
 
 
 def get_stats(temp, height, plotfig: int = 0):
@@ -125,7 +91,6 @@ def get_stats(temp, height, plotfig: int = 0):
     dtemp[0] = 1e-4
     dtemp[dtemp == 0] = 1e-4
 
-    # iinv = np.where(dtemp >= 0)[0] + 1
     inoninv = np.where(dtemp <= 0)[0] + 1
     switch = np.diff(np.sign(dtemp))
     iswitch = np.where(switch != 0)[0] + 1
@@ -139,9 +104,6 @@ def get_stats(temp, height, plotfig: int = 0):
         # This means the inversion goes all the way to the top of the
         # model atmosphere. Only ok if it was chopped at ~500 mb!
         itop = len(height) - 1
-        # elif len(inoninv) == 1:
-        #     # Only one inversion (simple case)
-        #     itop = inoninv[0] - 1
     elif len(inoninv) >= 1:
         # Multiple inversions, so check if they are thin (< 100m )
         # non-inversions, and, if so, ignore them up until we get to the
@@ -181,20 +143,16 @@ def get_stats(temp, height, plotfig: int = 0):
         imax = temp[iswitch[iswitch < itop]].argmax()
         itop = iswitch[imax]
 
-    # TOOD: deal with this
-    # if height[itop] > 8:
-    #     print("Inversion goes to top of model atmosphere")
-
     invdepth = height[itop] - height[0]
     invstrength = temp[itop] - temp[0]
     if invdepth <= 0:
         raise ValueError("Inversion depth should not be <= 0")
+
     if invstrength < 0:
-        # TODO: deal with these cases
-        pass
-        # raise ValueError("Inversion strength should not be < 0")
+        raise ValueError("Inversion strength should not be < 0")
 
     # if plotfig:
+    #     iinv = np.where(dtemp >= 0)[0] + 1
     #     plot_prof_inv(height, temp, itop, iinv, figno=10, label="")
 
     return invdepth, invstrength
@@ -211,11 +169,10 @@ def interp_to_zsrf(zin, tin, pin, zsrf):
     return znew, tnew, pnew
 
 
-def get_inversion_stats(ncdir, outfile):
+def get_inversion_stats(ncdir):
     """
     Get the inversion statitistics and save to a file
     @param ncdir  Directory with netcdf files to use
-    @param outfile  File to save results to
     """
 
     allfiles = np.sort(os.listdir(ncdir))
@@ -227,15 +184,8 @@ def get_inversion_stats(ncdir, outfile):
         elif file.startswith("geop_"):
             geopfiles.append(file)
 
-    tqfile = tqfiles[0]
-    geopfile = geopfiles[0]
-    # filenames = ["test_20180101_00_tuvz.nc"]
-
-    # Get the altitudes
-    alt, _ = getalt(ncdir + geopfile)
-
     # Get info from the first file that doesn't change
-    with Dataset(ncdir + tqfile, "r") as ncid:
+    with Dataset(ncdir + tqfiles[0], "r") as ncid:
         # ncid.variables.keys()
         # dict_keys(['longitude', 'latitude', 'level', 'time', 't', 'q'])
         # ncid["t"]: int16 t(time, level, latitude, longitude)
@@ -248,6 +198,8 @@ def get_inversion_stats(ncdir, outfile):
 
         # plt.figure(1)
         # nalts = ncid.dimensions["level"].size
+        # # Get the altitudes
+        # alt, _ = getalt(ncdir + geopfiles[0])
         # plt.clf()
         # plt.plot(ncid["t"][0, :, 0, 0], alt[0, :nalts, 0, 0])
         # plt.plot(ncid["t"][0, :, -1, 0], alt[0, :nalts, -1, 0])
@@ -265,15 +217,13 @@ def get_inversion_stats(ncdir, outfile):
     #     plt.clf()
 
     for geopfile, tqfile in zip(geopfiles, tqfiles):
-        print(geopfile)
-
+        # print(geopfile)
         with Dataset(ncdir + tqfile, "r") as ncid:
             # Altitudes and sum of surface temperatures
             alt, _ = getalt(ncdir + geopfile)
             tsurfsum += ncid["t"][0, -1, :, :]
             for ilat in range(nlats):
-                # TODO: Fix next line: chance to range(nlats)
-                for ilon in range(0, nlons, 100):
+                for ilon in range(nlons):
                     temp = np.flipud(ncid["t"][0, :, ilat, ilon].data)
                     alt0 = alt[0, :, ilat, ilon]
                     isinv = inversion_exists(temp)
@@ -285,6 +235,26 @@ def get_inversion_stats(ncdir, outfile):
                         ninversions[ilat, ilon] += 1
                         depthsum[ilat, ilon] += invdepth
                         intensum[ilat, ilon] += invstrength
+
+    return lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum
+
+
+def get_and_save_inversion_stats(ncdir, outfile):
+    """
+    Get the inversion statitistics and save to a file
+    @param ncdir  Directory with netcdf files to use
+    @param outfile  File to save results to
+    """
+
+    (
+        lats,
+        lons,
+        ncases,
+        tsurfsum,
+        ninversions,
+        depthsum,
+        intensum,
+    ) = get_inversion_stats(ncdir)
 
     # Save results to netcdf file
     create_inversion_file(
@@ -298,17 +268,64 @@ def get_inversion_stats(ncdir, outfile):
         intensum,
     )
 
-    # plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
+    plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
 
-if __name__ == "__main__":
+def get_regex_from_fileformat(fileformat: str) -> str:
+    """
+    Get string to use with regex from the file format string
+    @parrams fileformat  The file format
+    @returns  The string for regex
+    """
+    # Create the regex from the fileformat
+    regstr = ""
+    skipnext = False
+    for i, c in enumerate(fileformat):
+        if skipnext:
+            skipnext = False
+            continue
+        if c == "%":
+            if regstr[-1] != "*":
+                regstr += "*"
+            skipnext = True
+        else:
+            regstr += c
+    return regstr
 
-    # Selected year
-    year = 2018
 
-    # Directory and output file
-    ncdir = "era5/" + str(year) + "/"
-    outfile = "era5/inversion_stats_" + str(year) + ".nc"
+def getfiles(ncdir, fileformat) -> list[str]:
+    """
+    Get the files for combining
+    @returns   A list of the files
+    """
+    import datetime as dt
+    import re
 
-    # Run
-    get_inversion_stats(ncdir, outfile)
+    regstr = get_regex_from_fileformat(fileformat)
+    regex = re.compile(regstr)
+
+    fnames = []
+    dates = []
+    for file in os.listdir(ncdir):
+        if regex.match(file):
+            dates.append(dt.datetime.strptime(file, fileformat))
+            fnames.append(file)
+    return fnames
+
+
+# # # # #     PROFILING     # # # # #
+# importing library
+# import cProfile, pstats, io
+# from pstats import SortKey
+
+# pr = cProfile.Profile()
+# pr.enable()
+
+# get_inversion_stats(ncdir, outfile)
+
+# pr.disable()
+# s = io.StringIO()
+# sortby = SortKey.CUMULATIVE
+# ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+# ps.print_stats()
+# print(s.getvalue())
