@@ -1,7 +1,7 @@
 # ERA5 files and intermediate file
 *.grib
 *.nc
-get_geopotentialfiles.sh
+get_geopotentialfiles*.sh
 
 # Mac DS_STORE files
 .DS_Store
