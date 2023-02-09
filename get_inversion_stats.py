@@ -271,6 +271,40 @@ def get_and_save_inversion_stats(ncdir, outfile):
     plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
 
+if __name__ == "__main__":
+
+    # Selected year
+    year = 2018
+
+    # Directory and output file
+    ncdir = "era5/" + str(year) + "/"
+    outfile = "era5/inversion_stats_" + str(year) + ".nc"
+
+    # Run
+    (
+        lats,
+        lons,
+        ncases,
+        tsurfsum,
+        ninversions,
+        depthsum,
+        intensum,
+    ) = get_inversion_stats(ncdir)
+
+    # Save results to netcdf file
+    create_inversion_file(
+        outfile,
+        lats,
+        lons,
+        ncases,
+        tsurfsum,
+        ninversions,
+        depthsum,
+        intensum,
+    )
+
+    plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
+
 # # # # #     PROFILING     # # # # #
 # importing library
 # import cProfile, pstats, io
