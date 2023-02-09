@@ -39,52 +39,15 @@ are for 1990–2009."
 
 """
 
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset  # , num2date
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 
 from get_altitudes import getalt
+from create_inversion_file import create_inversion_file
 
-
-# class PassOnProfPlot:
-#     def __init__(self, plotfig, temp, height):
-#         pass
-
-#     def plot(self, label):
-#         pass
-
-#     def addlabels(self):
-#         pass
-
-#     def finalize(self):
-#         pass
-
-#     def addinv(self, iinv, itop):
-#         pass
-
-
-# class ProfPlotter:
-#     def __init__(self, plotfig, temp, height):
-#         self.plotfig = plotfig
-#         self.temp = temp
-#         self.height = height
-
-#     def plot(self, label):
-#         if plotfig:
-#             plt.figure(figno)
-#             plt.clf()
-#             plt.plot(self.temp, self.height, ".-", label=label)
-
-#     def addinv(self, iinv, itop):
-#         plt.plot(self.temp[itop], self.height[itop], "r*", markersize=20)
-#         plt.plot(self.temp[iinv], self.height[iinv], "go")
-
-#     def finalize(self):
-#         if plotfig:
-#             plt.ylim([0, 6])
-#             plt.ylabel("Height (km)")
-#             plt.xlabel("Temperature (K)")
+# from plot_results import plot_results
 
 
 def plot_prof(figno, height, temp, label=""):
@@ -148,6 +111,13 @@ def get_params(year):
 
 
 def get_stats(temp, height, plotfig: int = 0):
+    """
+    Get the inversion statistics
+    @param temp  Temperature profile, surface to TOA
+    @param height  Altitudes, surface to TOA
+    @returns  Inversion depth,
+    @returns  Inversion strength
+    """
     dtemp = np.diff(temp)
 
     # Ignore a non-inversion in the surface layer
@@ -219,8 +189,10 @@ def get_stats(temp, height, plotfig: int = 0):
     invstrength = temp[itop] - temp[0]
     if invdepth <= 0:
         raise ValueError("Inversion depth should not be <= 0")
-    if invstrength <= 0:
-        raise ValueError("Inversion strength should not be <= 0")
+    if invstrength < 0:
+        # TODO: deal with these cases
+        pass
+        # raise ValueError("Inversion strength should not be < 0")
 
     # if plotfig:
     #     plot_prof_inv(height, temp, itop, iinv, figno=10, label="")
@@ -229,6 +201,7 @@ def get_stats(temp, height, plotfig: int = 0):
 
 
 def interp_to_zsrf(zin, tin, pin, zsrf):
+    """ """
     tsrf = np.interp(zsrf, zin, tin)
     psrf = np.interp(zsrf, zin, pin)
     iabove = np.where(zin > zsrf)[0]
@@ -238,68 +211,13 @@ def interp_to_zsrf(zin, tin, pin, zsrf):
     return znew, tnew, pnew
 
 
-def get_stats_from_ncid(ncid, ilat, ilon, alt):
-    # zfac = 1 / 9.80665 / 1000
-    # geop, temp, press = interp_to_zsrf(
-    #     ncid["z"][itime, :, ilat, ilon][i500],
-    #     ncid["t"][itime, :, ilat, ilon][i500],
-    #     ncid["level"][i500],
-    #     zsrf,
-    # )
-    # alt=Re*h/(Re−h)
-    # height = zfac * geop
+def get_inversion_stats(ncdir, outfile):
+    """
+    Get the inversion statitistics and save to a file
+    @param ncdir  Directory with netcdf files to use
+    @param outfile  File to save results to
+    """
 
-    temp = ncid["t"][0, :, ilat, ilon].data
-    alt0 = alt[0, :, ilat, ilon]
-    # plotProf = PlotProf(figno, temp, alt0)
-
-    if inversion_exists(temp):
-        # date = num2date(ncid["time"][0].data, ncid["time"].units)
-        # datestr = date.strftime("%Y%m%d %H UTC")
-        # plotProf.plot(datestr)
-        invdepth, invstrength = get_stats(temp[alt0 <= 8], alt0[alt0 <= 8])
-        # plotProf.finalize()
-        return True, invdepth, invstrength, temp[0]
-
-    # Plot and move on to the next time period
-    # plotProf.plot(filename + ": none")
-    # plotProf.finalize()
-    return False, None, None, temp[0]
-
-
-def get_surface_heights():
-    direc = "/Users/prowe/Sync/measurements/Antarctica/"
-    filename = "geo_1279l4_0.1x0.1.grib2_v4_unpack.nc"
-
-    with Dataset(direc + filename, "r") as ncid:
-        ilats = np.where(ncid["latitude"][:] <= -88)[0]
-        srfht = {
-            "lats": ncid["latitude"][ilats],
-            "lons": ncid["longitude"][:],
-            "z": ncid["z"][0, ilats, :],
-        }
-
-    return srfht
-
-
-def get_surface_height(srfhts, lat, lon):
-    ilat = np.where(srfhts["lats"] == lat)[0]
-    if len(ilat) != 1:
-        raise ValueError("Bad value for lat")
-    ilon = np.where(srfhts["lons"] == lon)[0]
-    if len(ilon) != 1:
-        raise ValueError("Bad value for lat")
-    return srfhts["z"][ilat[0], ilon[0]]
-
-
-if __name__ == "__main__":
-    # plotfig = False
-    # if plotfig:
-    #     PlotProf = ProfPlotter
-    # else:
-    #     PlotProf = PassOnProfPlot
-
-    ncdir = "era5/2018/"
     allfiles = np.sort(os.listdir(ncdir))
     tqfiles = []
     geopfiles = []
@@ -322,33 +240,24 @@ if __name__ == "__main__":
         # dict_keys(['longitude', 'latitude', 'level', 'time', 't', 'q'])
         # ncid["t"]: int16 t(time, level, latitude, longitude)
 
-        # TODO: Get rid of nalts here and on 2 lines below
-        nalts = ncid.dimensions["level"].size
-
-        # plt.figure(1)
-        # plt.clf()
-        # plt.plot(ncid["t"][0, :, 0, 0], alt[0, :nalts, 0, 0])
-        # plt.plot(ncid["t"][0, :, -1, 0], alt[0, :nalts, -1, 0])
-
-        # levels = ncid["level"][:]
-        # i500 = np.where(levels >= 500)[0]
-
         # Data for output
         nlats = ncid.dimensions["latitude"].size
         nlons = ncid.dimensions["longitude"].size
         lats = ncid["latitude"][:].data
         lons = ncid["longitude"][:].data
 
+        # plt.figure(1)
+        # nalts = ncid.dimensions["level"].size
+        # plt.clf()
+        # plt.plot(ncid["t"][0, :, 0, 0], alt[0, :nalts, 0, 0])
+        # plt.plot(ncid["t"][0, :, -1, 0], alt[0, :nalts, -1, 0])
+
     # Preallocate variables
-    # press = levels[i500]
     depthsum = np.zeros([nlats, nlons])
-    strengthsum = np.zeros([nlats, nlons])
+    intensum = np.zeros([nlats, nlons])
     tsurfsum = np.zeros([nlats, nlons])
     ninversions = np.zeros([nlats, nlons])
     ncases = np.zeros([nlats, nlons])
-
-    # Get the surface geopotential
-    # srfhts = get_surface_heights()
 
     # figno = 2
     # if plotfig:
@@ -357,85 +266,49 @@ if __name__ == "__main__":
 
     for geopfile, tqfile in zip(geopfiles, tqfiles):
         print(geopfile)
-        depths = np.zeros([nlats, nlons])
+
         with Dataset(ncdir + tqfile, "r") as ncid:
-            # Get the altitudes
+            # Altitudes and sum of surface temperatures
             alt, _ = getalt(ncdir + geopfile)
-            # TODO: Fix next two lines
+            tsurfsum += ncid["t"][0, -1, :, :]
             for ilat in range(nlats):
-                for ilon in range(0, nlons, 10):  # nlons):
-                    ncases0 = 0
-                    ninversion = 0
-                    depth = []
-                    strength = []
-                    tsurf = []
-
-                    # Get the surface height for this lat and lon
-                    # zsrf = get_surface_height(srfhts, lats[ilat], lons[ilon])
-
-                    # for itime in range(ncid.dimensions["time"].size):
-                    ncases0 += 1
-                    isinv, invdepth, invstrength, tsrf = get_stats_from_ncid(
-                        ncid, ilat, ilon, alt
-                    )
-                    tsurf.append(tsrf)
+                # TODO: Fix next line: chance to range(nlats)
+                for ilon in range(0, nlons, 100):
+                    temp = np.flipud(ncid["t"][0, :, ilat, ilon].data)
+                    alt0 = alt[0, :, ilat, ilon]
+                    isinv = inversion_exists(temp)
+                    ncases[ilat, ilon] += 1
                     if isinv:
-                        ninversion += 1
-                        depth.append(invdepth)
-                        strength.append(invstrength)
-
-                    # QC
-                    if (len(depth) != ninversion) or (
-                        len(strength) != ninversion
-                    ):
-                        raise ValueError(
-                            "Number of inversion and depths/strengths differs!"
+                        invdepth, invstrength = get_stats(
+                            temp[alt0 <= 7], alt0[alt0 <= 7]
                         )
+                        ninversions[ilat, ilon] += 1
+                        depthsum[ilat, ilon] += invdepth
+                        intensum[ilat, ilon] += invstrength
 
-                    ncases[ilat, ilon] = ncases0
-                    ninversions[ilat, ilon] = ninversion
-                    depthsum[ilat, ilon] = np.sum(depth)
-                    strengthsum[ilat, ilon] = np.sum(strength)
-                    tsurfsum[ilat, ilon] = np.sum(tsurf)
+    # Save results to netcdf file
+    create_inversion_file(
+        outfile,
+        lats,
+        lons,
+        ncases,
+        tsurfsum,
+        ninversions,
+        depthsum,
+        intensum,
+    )
 
-    frequency = ninversions / ncases
-    tsurface = tsurfsum / ncases
-    depth = depthsum / ninversions
-    strength = strengthsum / ninversions
+    # plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
-    plt.figure(3)
-    plt.clf()
-    plt.subplot(3, 1, 1)
-    plt.plot(lats, frequency, ".-")
-    plt.ylabel("Frequency")
-    plt.subplot(3, 1, 2)
-    plt.plot(lats, depth, ".-")
-    plt.ylabel("Inversion depth (m)")
-    plt.subplot(3, 1, 3)
-    plt.plot(lats, strength, ".-")
-    plt.ylabel("Inversion strength (K)")
 
-    plt.figure(4)
-    plt.clf()
-    plt.plot(lats, tsurface - 273.15, ".")
+if __name__ == "__main__":
 
-    # print(f"The frequency is: {frequency}")
-    # print(f"The mean depth is: {round(1000*np.mean(depth))} m")
-    # print(f"The mean strength is: {round(np.mean(strength),2)} K")
+    # Selected year
+    year = 2018
 
-    # for filename in filenames:
-    #     ncid = Dataset(eradir + filename, "r")
-    #     height = zfac * ncid["z"][0, :, 0, 0]
-    #     temp = ncid["t"][0, :, 0, 0]
-    #     levels = ncid["level"][:]
-    #     plt.subplot(121)
-    #     plt.plot(temp, height, label=filename)
-    #     plt.subplot(122)
-    #     plt.plot(temp, levels)
-    #     ncid.close()
-    # plt.subplot(121)
-    # plt.legend()
-    # plt.ylim([0, 13])
-    # plt.subplot(122)
-    # plt.ylim([100, 1002])
-    # plt.gca().invert_yaxis()
+    # Directory and output file
+    ncdir = "era5/" + str(year) + "/"
+    outfile = "era5/inversion_stats_" + str(year) + ".nc"
+
+    # Run
+    get_inversion_stats(ncdir, outfile)
