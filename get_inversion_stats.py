@@ -271,48 +271,6 @@ def get_and_save_inversion_stats(ncdir, outfile):
     plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
 
-def get_regex_from_fileformat(fileformat: str) -> str:
-    """
-    Get string to use with regex from the file format string
-    @parrams fileformat  The file format
-    @returns  The string for regex
-    """
-    # Create the regex from the fileformat
-    regstr = ""
-    skipnext = False
-    for i, c in enumerate(fileformat):
-        if skipnext:
-            skipnext = False
-            continue
-        if c == "%":
-            if regstr[-1] != "*":
-                regstr += "*"
-            skipnext = True
-        else:
-            regstr += c
-    return regstr
-
-
-def getfiles(ncdir, fileformat) -> list[str]:
-    """
-    Get the files for combining
-    @returns   A list of the files
-    """
-    import datetime as dt
-    import re
-
-    regstr = get_regex_from_fileformat(fileformat)
-    regex = re.compile(regstr)
-
-    fnames = []
-    dates = []
-    for file in os.listdir(ncdir):
-        if regex.match(file):
-            dates.append(dt.datetime.strptime(file, fileformat))
-            fnames.append(file)
-    return fnames
-
-
 # # # # #     PROFILING     # # # # #
 # importing library
 # import cProfile, pstats, io
