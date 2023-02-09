@@ -61,6 +61,7 @@ def write_bash(dates, times, gb_dir, nc_dir):
 
                 tq_nc = getfname(nc_dir, date, mytime, "tq_ml_", ".nc")
                 geop_nc = getfname(nc_dir, date, mytime, "geop_", ".nc")
+                zlnsp_nc = getfname(nc_dir, date, mytime, "zlnsp_ml_", ".nc")
 
                 # Write command to create geopotential height
                 cmd = compgeo + tq_gb + " " + zlnsp_gb + " -o " + geop_gb
@@ -74,6 +75,10 @@ def write_bash(dates, times, gb_dir, nc_dir):
                 # Write command to convert geop grib to netcdf
                 # geop_nc = geopgrib[: geop_gb.find(".grib")] + ".nc"
                 cmd = grib2nc + geop_nc + " " + geop_gb
+                fid.write(cmd + "\n")
+
+                # Write command to convert zlnsp grib to netcdf
+                cmd = grib2nc + zlnsp_nc + " " + zlnsp_gb
                 fid.write(cmd + "\n")
 
         fid.write("echo done\n")
@@ -195,8 +200,8 @@ def runner(year, topdir):
     gribdir = topdir + "grib/" + yearstr + "/"
     ncdir = topdir + yearstr + "/"
 
-    date1 = yearstr + "-01-01"
-    date2 = yearstr + "-12-31"
+    date1 = yearstr + "-06-01"
+    date2 = yearstr + "-08-31"
     timestamps = pd.date_range(date1, date2).tolist()
 
     dates = [d.strftime("%Y-%m-%d") for d in timestamps]
@@ -207,27 +212,20 @@ def runner(year, topdir):
     ]
 
     download(dates, times, gribdir)
-    write_bash(dates, times, gribdir, ncdir)
+    # write_bash(dates, times, gribdir, ncdir)
 
-
-# dates = [
-#     "2018-08-01/to/2018-08-31",
-# ]
-# dates = [
-#     "2018-08-01",
-#     "2018-08-02",
-# ]
 
 ERADIR = "era5/"
-runner(2018, ERADIR)
-# gribdir = eradir + "grib/2018/"
-# ncdir = eradir + "2018/"
+runner(2021, ERADIR)
+runner(2022, ERADIR)
+runner(2010, ERADIR)
+runner(2011, ERADIR)
+runner(2012, ERADIR)
+runner(2013, ERADIR)
+runner(2014, ERADIR)
+runner(2015, ERADIR)
+runner(2016, ERADIR)
+runner(2017, ERADIR)
 
 # Run in terminal via:
 # bash get_geopotentialfiles.sh
-
-
-# Make the following calls from the terminal:
-# python3 compute_geopotential_on_ml.py tq_ml.grib zlnsp_ml.grib -o myfile.grib
-# grib_to_netcdf -o myfile.nc myfile.grib
-# grib_to_netcdf -o tq_ml_20150801_00.nc tq_ml_20150801_00.grib
