@@ -196,10 +196,20 @@ def get_stats(temp, height, plotfig: int = 0):
             if dtemp[iswitch[lev - 1]] > 0 or dtemp[iswitch[lev]] < 0:
                 raise ValueError("Unexpected behavior with temperature")
             noninvdepth = height[iswitch[lev]] - height[iswitch[lev - 1]]
+            # Quit if there is a noninversion deeper than 100 m,
             if noninvdepth > 0.1:
                 # We are out of the inversion, so quit
                 itop = iswitch[lev - 1]  # last temp that increases
                 break
+
+    # Make sure this is the maximum temperature within the section of
+    # troposphere containing the inversion. If a temperature lower down
+    # in the troposphere is higher, use it instead (but do not go above)
+    # This avoids negative inversion strengths that can occur due to
+    # small inversions occurring aloft within a large noninversion layer
+    if np.any(temp[itop] < temp[iswitch[iswitch < itop]]):
+        imax = temp[iswitch[iswitch < itop]].argmax()
+        itop = iswitch[imax]
 
     # TOOD: deal with this
     # if height[itop] > 8:
@@ -247,7 +257,7 @@ def get_stats_from_ncid(ncid, ilat, ilon, alt):
         # date = num2date(ncid["time"][0].data, ncid["time"].units)
         # datestr = date.strftime("%Y%m%d %H UTC")
         # plotProf.plot(datestr)
-        invdepth, invstrength = get_stats(temp, alt0)  # , plotProf)
+        invdepth, invstrength = get_stats(temp[alt0 <= 8], alt0[alt0 <= 8])
         # plotProf.finalize()
         return True, invdepth, invstrength, temp[0]
 
@@ -304,7 +314,7 @@ if __name__ == "__main__":
     # filenames = ["test_20180101_00_tuvz.nc"]
 
     # Get the altitudes
-    alt, _ = getalt(ncdir + "geop_2018_08_01_00.nc")
+    alt, _ = getalt(ncdir + geopfile)
 
     # Get info from the first file that doesn't change
     with Dataset(ncdir + tqfile, "r") as ncid:
