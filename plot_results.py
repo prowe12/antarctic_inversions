@@ -60,23 +60,24 @@ def plot_results(lat, lon, ncases, tsurfsum, ninversions, depthsum, intensum):
 
 
 def plot_for_year(year, ncfile):
-    ncid = Dataset(ncfile)
-    plot_results(
-        ncid["lat"][:],
-        ncid["lon"][:],
-        ncid["ncases"][:],
-        ncid["sum_tsurface"][:],
-        ncid["ninversions"][:],
-        ncid["sum_depth"][:],
-        ncid["sum_intensity"][:],
-    )
+    with Dataset(ncfile) as ncid:
+        plot_results(
+            ncid["lat"][:],
+            ncid["lon"][:],
+            ncid["ncases"][:],
+            ncid["sum_tsurface"][:],
+            ncid["ninversions"][:],
+            ncid["sum_depth"][:],
+            ncid["sum_intensity"][:],
+        )
 
 
-# Selected year
-year = 2018
+if __name__ == "__main__":
+    # Selected year
+    year = 2018
 
-# Directory and output file
-ncdir = "era5/" + str(year) + "/"
-ncfile = "era5/inversion_stats_" + str(year) + ".nc"
+    # Directory and output file
+    ncdir = "era5/" + str(year) + "/"
+    ncfile = "era5/inversion_stats_" + str(year) + ".nc"
 
-plot_for_year(year, ncfile)
+    plot_for_year(year, ncfile)
