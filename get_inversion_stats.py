@@ -217,7 +217,7 @@ def get_inversion_stats(ncdir):
     #     plt.clf()
 
     for geopfile, tqfile in zip(geopfiles, tqfiles):
-        # print(geopfile)
+        print(geopfile)
         with Dataset(ncdir + tqfile, "r") as ncid:
             # Altitudes and sum of surface temperatures
             alt, _ = getalt(ncdir + geopfile)
@@ -225,13 +225,13 @@ def get_inversion_stats(ncdir):
             for ilat in range(nlats):
                 for ilon in range(nlons):
                     temp = np.flipud(ncid["t"][0, :, ilat, ilon].data)
-                    alt0 = alt[0, :, ilat, ilon]
                     isinv = inversion_exists(temp)
                     ncases[ilat, ilon] += 1
                     if isinv:
-                        invdepth, invstrength = get_stats(
-                            temp[alt0 <= 7], alt0[alt0 <= 7]
-                        )
+                        alt0 = alt[0, :, ilat, ilon]
+                        temp = temp[alt0 <= 7]
+                        alt0 = alt0[alt0 <= 7]
+                        invdepth, invstrength = get_stats(temp, alt0)
                         ninversions[ilat, ilon] += 1
                         depthsum[ilat, ilon] += invdepth
                         intensum[ilat, ilon] += invstrength
@@ -274,7 +274,7 @@ def get_and_save_inversion_stats(ncdir, outfile):
 if __name__ == "__main__":
 
     # Selected year
-    year = 2018
+    year = 2011
 
     # Directory and output file
     ncdir = "era5/" + str(year) + "/"
