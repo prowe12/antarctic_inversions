@@ -30,6 +30,7 @@ def plot_final_results(lat, lon, frequency, depth, strength, tsurf):
     plt.figure(4)
     plt.clf()
     plt.scatter(x, y, c=tsurf, marker="s")
+    plt.axis([-180, 180, -90, -60])
     plt.colorbar()
 
     plt.figure(5)
@@ -38,13 +39,18 @@ def plot_final_results(lat, lon, frequency, depth, strength, tsurf):
     plt.scatter(x, y, c=frequency, marker="s", cmap="jet")
     plt.colorbar(label="Frequency (%)")
     plt.ylabel("Latitude")
+    plt.axis([-180, 180, -90, -60])
+
     plt.subplot(312)
     plt.scatter(x, y, c=depth * 10, marker="s", cmap="jet")
     plt.colorbar(label="Depth (100 m)")
     plt.ylabel("Latitude")
+    plt.axis([-180, 180, -90, -60])
+
     plt.subplot(313)
     plt.scatter(x, y, c=strength, marker="s", cmap="jet")
     plt.colorbar(label="Intensity (K)")
+    plt.axis([-180, 180, -90, -60])
     plt.ylabel("Latitude")
     plt.xlabel("Longitude")
 
