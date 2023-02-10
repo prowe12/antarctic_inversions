@@ -11,21 +11,7 @@ import numpy as np
 from netCDF4 import Dataset
 
 
-def plot_results(lat, lon, ncases, tsurfsum, ninversions, depthsum, intensum):
-    """
-    Plot results
-    @params lat  The latitude
-    @params lon  The longitude
-    @param ncases  The number of cases
-    @params tsurfsum  The sum of the surface temperatures
-    @params ninversions  Number of inversions
-    @params depthsum  = Sum of inversion depths
-    @params intensum  = Sum of inversion intensities
-    """
-    frequency = ninversions / ncases
-    depth = depthsum / ninversions
-    strength = intensum / ninversions
-    tsurf = tsurfsum / ncases - 273.15
+def plot_final_results(lat, lon, frequency, depth, strength, tsurf):
 
     plt.figure(3)
     plt.clf()
@@ -50,13 +36,36 @@ def plot_results(lat, lon, ncases, tsurfsum, ninversions, depthsum, intensum):
     plt.clf()
     plt.subplot(311)
     plt.scatter(x, y, c=frequency, marker="s", cmap="jet")
-    plt.colorbar()
+    plt.colorbar(label="Frequency (%)")
+    plt.ylabel("Latitude")
     plt.subplot(312)
     plt.scatter(x, y, c=depth * 10, marker="s", cmap="jet")
-    plt.colorbar()
+    plt.colorbar(label="Depth (100 m)")
+    plt.ylabel("Latitude")
     plt.subplot(313)
     plt.scatter(x, y, c=strength, marker="s", cmap="jet")
-    plt.colorbar()
+    plt.colorbar(label="Intensity (K)")
+    plt.ylabel("Latitude")
+    plt.xlabel("Longitude")
+
+
+def plot_results(lat, lon, ncases, tsurfsum, ninversions, depthsum, intensum):
+    """
+    Plot results
+    @params lat  The latitude
+    @params lon  The longitude
+    @param ncases  The number of cases
+    @params tsurfsum  The sum of the surface temperatures
+    @params ninversions  Number of inversions
+    @params depthsum  = Sum of inversion depths
+    @params intensum  = Sum of inversion intensities
+    """
+    frequency = ninversions / ncases
+    depth = depthsum / ninversions
+    strength = intensum / ninversions
+    tsurf = tsurfsum / ncases - 273.15
+
+    plot_final_results(lat, lon, frequency, depth, strength, tsurf)
 
 
 def plot_for_year(year, ncfile):
