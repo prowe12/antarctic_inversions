@@ -19,11 +19,20 @@ All rights reserved.
 
 import numpy as np
 from netCDF4 import Dataset  # type: ignore
+import numpy.typing as npt
 
 
 def create_inversion_file(
-    outfile, lat, lon, ncases, tsrfsum, ninversions, depthsum, intensum
+    outfile: str,
+    lat: npt.NDArray[np.float64],
+    lon: npt.NDArray[np.float64],
+    ncases: npt.NDArray[np.float64],
+    tsrfsum: npt.NDArray[np.float64],
+    ninversions: npt.NDArray[np.float64],
+    depthsum: npt.NDArray[np.float64],
+    intensum: npt.NDArray[np.float64],
 ):
+
     """
     Create the output netcdf file for a set of inversion variables
     @params outfile  The name of the file to be created
