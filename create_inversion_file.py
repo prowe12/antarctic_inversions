@@ -6,20 +6,9 @@ Created on Wed Feb  8 18:36:36 2023
 @author: prowe
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug  1 17:36:32 2018
-
-@author: prowe
-
-Copyright 2017 by Penny M. Rowe and NorthWest Research Associates.
-All rights reserved.
-
-"""
-
 import numpy as np
-from netCDF4 import Dataset  # type: ignore
 import numpy.typing as npt
+from netCDF4 import Dataset  # type: ignore
 
 
 def create_inversion_file(
@@ -45,13 +34,13 @@ def create_inversion_file(
     @params intensum  = Sum of inversion intensities
     """
     # Use netcdf4 to save the results
-    with Dataset(outfile, "w", format="NETCDF4_CLASSIC") as nc:
+    with Dataset(outfile, "w", format="NETCDF4_CLASSIC") as ncid:
 
-        cvar = nc.createVariable
+        cvar = ncid.createVariable
 
         #  Create Dimensions
-        nc.createDimension("latitude", len(lat))
-        nc.createDimension("longitude", len(lon))
+        ncid.createDimension("latitude", len(lat))
+        ncid.createDimension("longitude", len(lon))
 
         # Create variables
         nc_lat = cvar("lat", np.float32, ("latitude"))
