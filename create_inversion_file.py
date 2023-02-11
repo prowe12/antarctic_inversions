@@ -18,7 +18,7 @@ All rights reserved.
 """
 
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # type: ignore
 
 
 def create_inversion_file(

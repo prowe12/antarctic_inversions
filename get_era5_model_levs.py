@@ -18,8 +18,8 @@ Created on Tue Feb  7 19:13:05 2023
 #
 
 import os
-import cdsapi
-import pandas as pd
+import cdsapi  # type: ignore
+import pandas as pd  # type: ignore
 
 
 def get_datestr(date: str, mytime: str):
@@ -47,10 +47,17 @@ def getfname(direc: str, date: str, mytime: str, paramstr: str, ext: str):
     return direc + paramstr + datestr + ext
 
 
-def write_bash(dates, times, gb_dir, nc_dir):
-    """Write the bash script"""
+def write_bash(dates: list[str], times: list[str], gb_dir: str, nc_dir: str):
+    """
+    Write the bash script to compute geopotentials from model levels and
+    to create netcdf files from grib files
+    @params dates  The dates (%Y-%m-%d)
+    @params times  The times
+    @params gb_dir  The directory containing the grib files
+    @params nc_dir  The directory for the netcdf files
+    """
     compgeo = "python3 compute_geopotential_on_ml.py "
-    grib2nc = "grib_to_netcdf -o "  # "myfile.nc myfile.grib"
+    grib2nc = "grib_to_netcdf -o "
     fname = "get_geopotentialfiles_" + dates[0][:4] + ".sh"
     with open(fname, "w", encoding="utf-8") as fid:
         for date in dates:
@@ -69,30 +76,15 @@ def write_bash(dates, times, gb_dir, nc_dir):
                 fid.write(cmd + "\n")
 
                 # Write command to convert tq grib to netcdf
-                # tq_nc = tq_gb[: tq_gb.find(".grib")] + ".nc"
-                cmd = grib2nc + tq_nc + " " + tq_gb
-                fid.write(cmd + "\n")
+                fid.write(grib2nc + tq_nc + " " + tq_gb + "\n")
 
                 # Write command to convert geop grib to netcdf
-                # geop_nc = geopgrib[: geop_gb.find(".grib")] + ".nc"
-                cmd = grib2nc + geop_nc + " " + geop_gb
-                fid.write(cmd + "\n")
+                fid.write(grib2nc + geop_nc + " " + geop_gb + "\n")
 
                 # Write command to convert zlnsp grib to netcdf
-                cmd = grib2nc + zlnsp_nc + " " + zlnsp_gb
-                fid.write(cmd + "\n")
+                fid.write(grib2nc + zlnsp_nc + " " + zlnsp_gb + "\n")
 
         fid.write("echo done\n")
-
-
-# def getfilenames(direc, date, mytime):
-#     tqfile = getfilename(direc, date, mytime, "tq_ml_")
-#     zlnspfile = getfilename(direc, date, mytime, "zlnsp_ml_")
-#     return tqfile, zlnspfile
-
-
-# def get_geop_fname(direc, date, mytime):
-#     return getfilename(direc, date, mytime, "geop")
 
 
 def download(dates: list[str], times: list[str], gribdir: str):
@@ -191,7 +183,7 @@ def download(dates: list[str], times: list[str], gribdir: str):
             )
 
 
-def runner(year, topdir):
+def runner(year: int, topdir: str):
     """
     Download ERA5 and write the bash file
     @params year  Year of interest
@@ -206,30 +198,32 @@ def runner(year, topdir):
     timestamps = pd.date_range(date1, date2).tolist()
 
     dates = [d.strftime("%Y-%m-%d") for d in timestamps]
-
-    times = [
-        "00:00:00",
-        "12:00:00",
-    ]
+    times = ["00:00:00", "12:00:00"]
 
     download(dates, times, gribdir)
     write_bash(dates, times, gribdir, ncdir)
 
 
-ERADIR = "era5/"
-runner(2010, ERADIR)
-runner(2011, ERADIR)
-runner(2012, ERADIR)
-runner(2013, ERADIR)
-runner(2014, ERADIR)
-runner(2015, ERADIR)
-runner(2016, ERADIR)
-runner(2017, ERADIR)
-runner(2018, ERADIR)
-runner(2019, ERADIR)
-runner(2020, ERADIR)
-runner(2021, ERADIR)
-runner(2022, ERADIR)
+if __name__ == "__main__":
+    ERADIR = "era5/"
+    runner(2005, ERADIR)
+    runner(2006, ERADIR)
+    runner(2007, ERADIR)
+    runner(2008, ERADIR)
+    runner(2009, ERADIR)
+    # runner(2010, ERADIR)
+    # runner(2011, ERADIR)
+    # runner(2012, ERADIR)
+    # runner(2013, ERADIR)
+    # runner(2014, ERADIR)
+    # runner(2015, ERADIR)
+    # runner(2016, ERADIR)
+    # runner(2017, ERADIR)
+    # runner(2018, ERADIR)
+    # runner(2019, ERADIR)
+    # runner(2020, ERADIR)
+    # runner(2021, ERADIR)
+    # runner(2022, ERADIR)
 
 # Run in terminal via:
 # bash get_geopotentialfiles.sh

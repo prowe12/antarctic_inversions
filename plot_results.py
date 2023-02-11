@@ -6,9 +6,9 @@ Created on Thu Feb  9 09:49:29 2023
 @author: prowe
 """
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # type: ignore
 
 
 def plot_final_results(lat, lon, frequency, depth, strength, tsurf):
@@ -39,19 +39,19 @@ def plot_final_results(lat, lon, frequency, depth, strength, tsurf):
     plt.figure(5)
     plt.clf()
     plt.subplot(311)
-    plt.scatter(x, y, c=frequency, marker="s", cmap="jet")
+    plt.scatter(x, y, c=frequency, marker="s")  # , cmap="jet")
     plt.colorbar(label="Frequency (%)")
     plt.ylabel("Latitude")
     plt.axis([-180, 180, -90, -60])
 
     plt.subplot(312)
-    plt.scatter(x, y, c=depth * 10, marker="s", cmap="jet")
-    plt.colorbar(label="Depth (100 m)")
+    plt.scatter(x, y, c=depth * 1000, marker="s")  # , cmap="jet")
+    plt.colorbar(label="Depth (m)")
     plt.ylabel("Latitude")
     plt.axis([-180, 180, -90, -60])
 
     plt.subplot(313)
-    plt.scatter(x, y, c=strength, marker="s", cmap="jet")
+    plt.scatter(x, y, c=strength, marker="s")  # , cmap="jet")
     plt.colorbar(label="Intensity (K)")
     plt.axis([-180, 180, -90, -60])
     plt.ylabel("Latitude")

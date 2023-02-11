@@ -47,8 +47,8 @@
 # For data in NetCDF format (i.e. converted from the native GRIB format
 # to NetCDF), the earth model is inherited from the GRIB data.
 
-from netCDF4 import Dataset
-import matplotlib.pyplot as plt
+from netCDF4 import Dataset  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 
 
 def getalt(fname):

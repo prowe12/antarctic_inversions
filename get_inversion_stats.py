@@ -7,55 +7,84 @@ Created on Thu Feb  2 13:46:11 2023
 
 From Zhang et al 2011
 
-"For all four datasets, SBIs are identified from temperature profile data 
-using Kahl’s (1990) algorithm, which scans from the surface upward to 
-500 hPa to find cases with temperature increasing with altitude. The 
-inversion top is defined as the bottom of the first layer in which 
-temperature decreases with altitude, but thin (<100 m) noninversion 
-layers, with temperature decreasing with height, are ignored if they are 
-embedded within a deeper inversion layer. Soundings are considered to be 
-unsuitable for analysis if the surface level is missing, there are fewer 
-than 10 upper-air data levels from surface to 500 hPa, or the temperature 
-difference across the inversion exceeds 40 K (Serreze et al. 1992). This 
-definition represents a true inversion layer (from the surface to the 
-inversion top), which is different from defining inversion strength as a 
-temperature difference between two prespecified levels or heights in the 
-boundary layer (Hudson and Brandt 2005; Kay and Gettelman 2009; 
+"For all four datasets, SBIs are identified from temperature profile data
+using Kahl’s (1990) algorithm, which scans from the surface upward to
+500 hPa to find cases with temperature increasing with altitude. The
+inversion top is defined as the bottom of the first layer in which
+temperature decreases with altitude, but thin (<100 m) noninversion
+layers, with temperature decreasing with height, are ignored if they are
+embedded within a deeper inversion layer. Soundings are considered to be
+unsuitable for analysis if the surface level is missing, there are fewer
+than 10 upper-air data levels from surface to 500 hPa, or the temperature
+difference across the inversion exceeds 40 K (Serreze et al. 1992). This
+definition represents a true inversion layer (from the surface to the
+inversion top), which is different from defining inversion strength as a
+temperature difference between two prespecified levels or heights in the
+boundary layer (Hudson and Brandt 2005; Kay and Gettelman 2009;
 Pavelsky et al. 2011)."
 
-"For each grid point or radiosonde station, we compute frequency of SBI 
-occurrence ( f ) and average SBI depth and intensity for the overall dataset 
+"For each grid point or radiosonde station, we compute frequency of SBI
+occurrence ( f ) and average SBI depth and intensity for the overall dataset
 and separately for each season, for each month, and for 0000 and 1200 UTC
-(61 h to account for the 1–2-h sounding duration). Following Kahl (1990) 
-and Serreze et al. (1992), three- month seasons are defined as January–March 
-(Arctic winter, Antarctic summer), July–September 
+(61 h to account for the 1–2-h sounding duration). Following Kahl (1990)
+and Serreze et al. (1992), three- month seasons are defined as January–March
+(Arctic winter, Antarctic summer), July–September
 (Arctic summer and Antarctic winter), etc.
 
-"In all comparisons of the various datasets, the models and reanalysis 
-are sampled at 0000 and 1200 UTC to mimic the radiosondes. Comparisons of 
-radiosonde data and the two climate models are for 1990–2007. Comparisons 
-for radiosonde data and ERA-Interim, and analysis of radiosonde data alone, 
+"In all comparisons of the various datasets, the models and reanalysis
+are sampled at 0000 and 1200 UTC to mimic the radiosondes. Comparisons of
+radiosonde data and the two climate models are for 1990–2007. Comparisons
+for radiosonde data and ERA-Interim, and analysis of radiosonde data alone,
 are for 1990–2009."
 
 """
 
-from netCDF4 import Dataset  # , num2date
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+from netCDF4 import Dataset  # type: ignore
+import numpy as np
+import matplotlib.pyplot as plt  # type: ignore
+import numpy.typing as npt
+
+# from typing import Any
 
 from get_altitudes import getalt
 from create_inversion_file import create_inversion_file
 from plot_results import plot_results
 
 
-def plot_prof(figno, height, temp, label=""):
+def plot_prof(
+    figno: int,
+    height: npt.NDArray[np.float64],
+    temp: npt.NDArray[np.float64],
+    label: str = "",
+):
+    """
+    Plot the temperature profile
+    @params figno:  The number of the figure
+    @params height  The height in the atmosphere from bottom to top
+    @params temp  The temperature, as a function of height
+    @params label  Label for the temperature
+    """
     plt.figure(figno)
     plt.clf()
     plt.plot(temp, height, ".-", label=label)
 
 
-def plot_prof_inv(height, temp, itop, iinv, figno=3, label=""):
+def plot_prof_inv(
+    height: npt.NDArray[np.float64],
+    temp: npt.NDArray[np.float64],
+    itop: int,
+    iinv: npt.NDArray[np.int_],
+    figno: int = 3,
+):
+    """
+    @params height  The height in the atmosphere from bottom to top
+    @params temp  The temperature, as a function of height
+    @params itop  Index to the top of the inversion
+    @params  iinv  Indices to all heights with an inversion
+    @params figno:  The number of the figure
+    """
+    plt.figure(figno)
     plot_prof(figno, height, temp)
     plt.plot(temp[itop], height[itop], "r*", markersize=20)
     plt.plot(temp[iinv], height[iinv], "go")
@@ -64,19 +93,23 @@ def plot_prof_inv(height, temp, itop, iinv, figno=3, label=""):
     plt.xlabel("Temperature (K)")
 
 
-def inversion_exists(temp):
-    # ID if surface-based temperature inversion is present
-    # True if temperature decreases between the first two
-    # temperatures *or* the second two temperatures
-    # the latter condition is added because the interpolation
-    # to the surface temperature appears to be imperfect
-    if temp[1] - temp[0] >= 0:
-        return True
-    else:
-        return False
+def inversion_exists(temp: npt.NDArray[np.float64]):
+    """
+    ID if surface-based temperature inversion is present
+    @params temp The first two or more temperatures in the atmosphere
+    @returns  True if inversion present
+    Notes: Returns true if temperature decreases between the first two
+    temperatures *or* the second two temperatures
+    the latter condition is added because the interpolation
+    to the surface temperature appears to be imperfect
+    """
+    return bool(temp[1] - temp[0] >= 0)
 
 
-def get_stats(temp, height, plotfig: int = 0):
+def get_stats(
+    temp: npt.NDArray[np.float64],
+    height: npt.NDArray[np.float64],
+):
     """
     Get the inversion statistics
     @param temp  Temperature profile, surface to TOA
@@ -152,37 +185,49 @@ def get_stats(temp, height, plotfig: int = 0):
         raise ValueError("Inversion strength should not be < 0")
 
     # if plotfig:
-    #     iinv = np.where(dtemp >= 0)[0] + 1
-    #     plot_prof_inv(height, temp, itop, iinv, figno=10, label="")
+    #    iinv = np.where(dtemp >= 0)[0] + 1
+    #    plot_prof_inv(height, temp, itop, iinv, figno=10)
 
     return invdepth, invstrength
 
 
-def interp_to_zsrf(zin, tin, pin, zsrf):
-    """ """
-    tsrf = np.interp(zsrf, zin, tin)
-    psrf = np.interp(zsrf, zin, pin)
-    iabove = np.where(zin > zsrf)[0]
-    znew = np.hstack([zsrf, zin[iabove]])
-    tnew = np.hstack([tsrf, tin[iabove]])
-    pnew = np.hstack([psrf, pin[iabove]])
-    return znew, tnew, pnew
-
-
-def get_inversion_stats(ncdir):
+def getfiles(ncdir: str):
     """
-    Get the inversion statitistics and save to a file
-    @param ncdir  Directory with netcdf files to use
+    Get the tq and geopotential files from ncdir
+    @params ncdir  The directory
+    @returns files  The files
     """
-
     allfiles = np.sort(os.listdir(ncdir))
     tqfiles = []
     geopfiles = []
     for file in allfiles:
         if file.startswith("tq_ml_"):
-            tqfiles.append(file)
-        elif file.startswith("geop_"):
-            geopfiles.append(file)
+            geopfile = "geop_" + file[len("tq_ml_") :]
+            if os.path.exists(ncdir + geopfile):
+                tqfiles.append(file)
+                geopfiles.append(geopfile)
+            else:
+                raise NameError(f"File {file} exists but {geopfile} does not")
+
+    return tqfiles, geopfiles
+
+
+def get_inversion_stats(ncdir: str):
+    """
+    Get the inversion statitistics and save to a file
+    @param ncdir  Directory with netcdf files to use
+    @returns lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum
+    @returns lats  The latitude
+    @returns lons The longitude
+    @returns ncases  The number of cases
+    @returns tsurfsum  The sum of surface temperatures
+    @returns ninversions  The number of inversions found
+    @returns depthsum  The sum of the inversion depths
+    @returns intensum  The sum of the inversion intensities
+    Notes: ncases - intensum are all functions of lats and lons
+    """
+
+    tqfiles, geopfiles = getfiles(ncdir)
 
     # Get info from the first file that doesn't change
     with Dataset(ncdir + tqfiles[0], "r") as ncid:
@@ -217,7 +262,6 @@ def get_inversion_stats(ncdir):
     #     plt.clf()
 
     for geopfile, tqfile in zip(geopfiles, tqfiles):
-        print(geopfile)
         with Dataset(ncdir + tqfile, "r") as ncid:
             # Altitudes and sum of surface temperatures
             alt, _ = getalt(ncdir + geopfile)
@@ -239,7 +283,7 @@ def get_inversion_stats(ncdir):
     return lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum
 
 
-def get_and_save_inversion_stats(ncdir, outfile):
+def get_and_save_inversion_stats(ncdir: str, outfile: str):
     """
     Get the inversion statitistics and save to a file
     @param ncdir  Directory with netcdf files to use
@@ -274,11 +318,11 @@ def get_and_save_inversion_stats(ncdir, outfile):
 if __name__ == "__main__":
 
     # Selected year
-    year = 2011
+    YEARSTR = "2009"
 
     # Directory and output file
-    ncdir = "era5/" + str(year) + "/"
-    outfile = "era5/inversion_stats_" + str(year) + ".nc"
+    NCDIR = "era5/" + YEARSTR + "/"
+    OUTFILE = "era5/inversion_stats_" + YEARSTR + ".nc"
 
     # Run
     (
@@ -289,21 +333,21 @@ if __name__ == "__main__":
         ninversions,
         depthsum,
         intensum,
-    ) = get_inversion_stats(ncdir)
+    ) = get_inversion_stats(NCDIR)
 
-    # Save results to netcdf file
-    create_inversion_file(
-        outfile,
-        lats,
-        lons,
-        ncases,
-        tsurfsum,
-        ninversions,
-        depthsum,
-        intensum,
-    )
+    # # Save results to netcdf file
+    # create_inversion_file(
+    #     OUTFILE,
+    #     lats,
+    #     lons,
+    #     ncases,
+    #     tsurfsum,
+    #     ninversions,
+    #     depthsum,
+    #     intensum,
+    # )
 
-    plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
+    # plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
 # # # # #     PROFILING     # # # # #
 # importing library
