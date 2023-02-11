@@ -42,10 +42,8 @@ are for 1990–2009."
 import os
 from netCDF4 import Dataset  # type: ignore
 import numpy as np
-import matplotlib.pyplot as plt  # type: ignore
 import numpy.typing as npt
-
-# from typing import Any
+import matplotlib.pyplot as plt  # type: ignore
 
 from get_altitudes import getalt
 from create_inversion_file import create_inversion_file
@@ -93,7 +91,7 @@ def plot_prof_inv(
     plt.xlabel("Temperature (K)")
 
 
-def inversion_exists(temp: npt.NDArray[np.float64]):
+def inversion_exists(temp: npt.NDArray[np.float64]) -> bool:
     """
     ID if surface-based temperature inversion is present
     @params temp The first two or more temperatures in the atmosphere
@@ -195,7 +193,8 @@ def getfiles(ncdir: str):
     """
     Get the tq and geopotential files from ncdir
     @params ncdir  The directory
-    @returns files  The files
+    @returns  The temperature specific humidity files
+    @returns  The geopotential files
     """
     allfiles = np.sort(os.listdir(ncdir))
     tqfiles = []
