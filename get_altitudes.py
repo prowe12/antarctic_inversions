@@ -1,57 +1,70 @@
-#!/usr/bin/env python
-#
-# Get altitudes corresponding ERA5 model levels
-#
-# Notes on calculating geopotential height, quoted from here:
-# https://confluence.ecmwf.int/display/CKB/ERA5%3A+compute+pressure+and+
-#    geopotential+on+model+levels%2C+geopotential+height+and+geometric+height
-#
-# Geopotential height
-#
-# In ERA5, and often in meteorology, heights (the height of the land and
-# sea surface, or specific heights in the atmosphere) are not represented
-# as geometric height, or altitude (in metres above the spheroid), but as
-# geopotential height (in metres above the geoid, which is represented by
-# the mean sea level in ERA5). Note, that ECMWF usually archive the
-# geopotential (in m2/s2), not the geopotential height.
-#
-# To obtain the geopotential height (h) in metres (of the land and
-# sea surface or at particular heights in the atmosphere),
-# divide the geopotential by the Earth's gravitational acceleration,
-# 9.80665 m/s2 in the IFS. This geopotential height is
-# relative to the geoid over land and the mean sea level over ocean - for
-# more information see ERA5: data documentation - spatial reference systems.
-#
-# Geometric height
-#
-# The geometric height or altitude (alt) is given by:
-# alt = Re * h / (Re − h)
-#
-# where Re is the radius of the Earth. This geometric height is relative
-# to the geoid over land and the mean sea level over ocean and it is
-# assumed that the Earth is a perfect sphere - for more information
-# see ERA5: data documentation - spatial reference systems.
-#
-# From https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation
-#      #ERA5:datadocumentation-Spatialreferencesystems
-# Earth model
-#
-# For data in GRIB1 format the earth model is a sphere with
-# radius = 6367.47 km, as defined in the WMO GRIB Edition 1
-# specifications, Table 7, GDS Octet 17.
-#
-# For data in GRIB2 format the earth model is a sphere with
-# radius = 6371.2290 km, as defined in the WMO GRIB2 specifications,
-# section 2.2.1, Code Table 3.2, Code figure 6.
-#
-# For data in NetCDF format (i.e. converted from the native GRIB format
-# to NetCDF), the earth model is inherited from the GRIB data.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb  7 19:13:05 2023
+
+@author: prowe
+
+
+Get altitudes corresponding ERA5 model levels
+
+Notes on calculating geopotential height, quoted from here:
+https://confluence.ecmwf.int/display/CKB/ERA5%3A+compute+pressure+and+
+    geopotential+on+model+levels%2C+geopotential+height+and+geometric+height
+
+Geopotential height
+
+In ERA5, and often in meteorology, heights (the height of the land and
+sea surface, or specific heights in the atmosphere) are not represented
+as geometric height, or altitude (in metres above the spheroid), but as
+geopotential height (in metres above the geoid, which is represented by
+the mean sea level in ERA5). Note, that ECMWF usually archive the
+geopotential (in m2/s2), not the geopotential height.
+
+To obtain the geopotential height (h) in metres (of the land and
+sea surface or at particular heights in the atmosphere),
+divide the geopotential by the Earth's gravitational acceleration,
+9.80665 m/s2 in the IFS. This geopotential height is
+relative to the geoid over land and the mean sea level over ocean - for
+more information see ERA5: data documentation - spatial reference systems.
+
+Geometric height
+
+The geometric height or altitude (alt) is given by:
+alt = Re * h / (Re − h)
+
+where Re is the radius of the Earth. This geometric height is relative
+to the geoid over land and the mean sea level over ocean and it is
+assumed that the Earth is a perfect sphere - for more information
+see ERA5: data documentation - spatial reference systems.
+
+From https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation
+      ERA5:datadocumentation-Spatialreferencesystems
+Earth model
+
+For data in GRIB1 format the earth model is a sphere with
+radius = 6367.47 km, as defined in the WMO GRIB Edition 1
+specifications, Table 7, GDS Octet 17.
+
+For data in GRIB2 format the earth model is a sphere with
+radius = 6371.2290 km, as defined in the WMO GRIB2 specifications,
+section 2.2.1, Code Table 3.2, Code figure 6.
+
+For data in NetCDF format (i.e. converted from the native GRIB format
+to NetCDF), the earth model is inherited from the GRIB data.
+"""
 
 from netCDF4 import Dataset  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 
 
-def getalt(fname):
+def getalt(fname: str):
+    """
+    Get the altitudes (and the geopotential) from the file
+    @params fname  The file
+    @returns alt  The altitudes, in km (time, level, latitude, longitude)
+    @returns geop  The geopotential, in km (time, level, latitude, longitude)
+    """
     with Dataset(fname, "r") as nc_h:
 
         # alt = Re * h / (Re − h)
@@ -60,17 +73,13 @@ def getalt(fname):
         # specifications, Table 7, GDS Octet 17.
         #
         # GRIB2: format the earth model is a sphere with
-        # radius = 6371.2290 km, as defined in the WMO GRIB2 specifications,
+        # radius = 6371.2290 km, as defined in the WMO GRIB2 specifications
+
+        # int16 z(time, level, latitude, longitude)
         geop = nc_h["z"][:].data / 9.80665 / 1000
         alt = 6367.47 * geop / (6367.47 - geop)
         alt[geop == 0] = 0
         return alt, geop
-
-
-# def get_tq():
-#     fname = tq_ml_20150801_00.nc
-#     with Dataset(fname, "r") as ncid:
-#         ncid['t']
 
 
 def example():
@@ -131,5 +140,5 @@ def example():
     # filling on
 
 
-# if __name__ == "__main__":
-#     example()
+if __name__ == "__main__":
+    example()
