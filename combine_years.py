@@ -10,7 +10,7 @@ import os
 import datetime as dt
 import re
 import numpy as np
-from netCDF4 import Dataset
+from netCDF4 import Dataset  # type: ignore
 
 
 def get_regex_from_fileformat(fmt: str) -> str:
@@ -50,10 +50,11 @@ def getfiles(direc: str, fmt: str) -> list[str]:
         if re.match(regstr, file):
             dates.append(dt.datetime.strptime(file, fmt))
             fnames.append(file)
-    return np.sort(fnames)
+    fnames = list(np.sort(fnames))
+    return fnames
 
 
-def combine_years(ncdir, fmt):
+def combine_years(ncdir: str, fmt: str):
     """
     Comine the temperature inversion data over all the years and
     save results to a single netcdf file
