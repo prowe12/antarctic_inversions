@@ -45,7 +45,7 @@ class TestGetStats:
         # fmt: on
 
         # Run
-        invdepth, invstrength = get_stats(temp, height, 1)
+        invdepth, invstrength = get_stats(temp, height)
 
         # Assert
         assert np.isclose(invdepth, 6.81143472)
@@ -412,20 +412,20 @@ class TestGetStats:
         # fmt: on
 
         # Run and assert that there is an exception
-        with pytest.raises(Exception) as e_info:
-            invdepth, invstrength = get_stats(temp, height, 1)
+        with pytest.raises(Exception):
+            get_stats(temp, height)
 
 
-# Run the tests (e.g. in Spyder):
-testGetStats = TestGetStats()
-testGetStats.test_one_inv()
-testGetStats.test_mini_noninv_near_surf()
-testGetStats.test_mini_noninv_near_surf_inv_to_top
-testGetStats.test_several_switches()
-testGetStats.test_inv_to_top_with_thick_noninv()
-testGetStats.test_simple_inv()
-testGetStats.test_all_inv()
-testGetStats.test_inv_goes_to_top()
-testGetStats.test_one_non_inv_level()
-testGetStats.test_invstrength_lt0()
-testGetStats.test_invstrength()
+# Example: Run the tests (e.g. in Spyder):
+# testGetStats = TestGetStats()
+# testGetStats.test_one_inv()
+# testGetStats.test_mini_noninv_near_surf()
+# testGetStats.test_mini_noninv_near_surf_inv_to_top()
+# testGetStats.test_several_switches()
+# testGetStats.test_inv_to_top_with_thick_noninv()
+# testGetStats.test_simple_inv()
+# testGetStats.test_all_inv()
+# testGetStats.test_inv_goes_to_top()
+# testGetStats.test_one_non_inv_level()
+# testGetStats.test_invstrength_lt0()
+# testGetStats.test_invstrength()
