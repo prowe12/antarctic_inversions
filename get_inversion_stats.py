@@ -334,19 +334,19 @@ if __name__ == "__main__":
         intensum,
     ) = get_inversion_stats(NCDIR)
 
-    # # Save results to netcdf file
-    # create_inversion_file(
-    #     OUTFILE,
-    #     lats,
-    #     lons,
-    #     ncases,
-    #     tsurfsum,
-    #     ninversions,
-    #     depthsum,
-    #     intensum,
-    # )
+    # Save results to netcdf file
+    create_inversion_file(
+        OUTFILE,
+        lats,
+        lons,
+        ncases,
+        tsurfsum,
+        ninversions,
+        depthsum,
+        intensum,
+    )
 
-    # plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
+    plot_results(lats, lons, ncases, tsurfsum, ninversions, depthsum, intensum)
 
 # # # # #     PROFILING     # # # # #
 # importing library

@@ -105,23 +105,21 @@ def combine_years(ncdir: str, fmt: str):
 
 
 # Example of runninng code
-#     from plot_results import plot_final_results
-#     from create_inversion_final_file import create_inversion_final_file
+from plot_results import plot_final_results
+from create_inversion_final_file import create_inversion_final_file
 
-#     # Directory and file format
-#     eradir = "era5/"
-#     fileformat = "inversion_stats_%Y.nc"
-#     outfile = eradir + "inversion_stats.nc"
+# Directory and file format
+eradir = "era5/"
+fileformat = "inversion_stats_%Y.nc"
+outfile = eradir + "inversion_stats.nc"
 
-#     # Calculate the means of frequency, depth, intensity, and
-#     # surface temperature for all years from the sums, the
-#     # numbers of cases and the numbers of inversions
-#     lat, lon, freq, depth, intensity, tsurf = combine_years(eradir, fileformat)
+# Calculate the means of frequency, depth, intensity, and
+# surface temperature for all years from the sums, the
+# numbers of cases and the numbers of inversions
+lat, lon, freq, depth, intensity, tsurf = combine_years(eradir, fileformat)
 
-#     # Save the result
-#     create_inversion_final_file(
-#         outfile, lat, lon, freq, depth, intensity, tsurf
-#     )
+# Save the result
+create_inversion_final_file(outfile, lat, lon, freq, depth, intensity, tsurf)
 
-#     # Plot it
-#     plot_final_results(lat, lon, freq, depth, intensity, tsurf)
+# Plot it
+plot_final_results(lat, lon, freq, depth, intensity, tsurf)
